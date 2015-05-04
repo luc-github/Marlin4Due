@@ -28,12 +28,24 @@
 #define X_MAX_PIN          -1  //Max endstops default to disabled "-1", set to commented value to enable.
 #define Y_MIN_PIN          68
 #define Y_MAX_PIN          -1  //Max endstops default to disabled "-1", set to commented value to enable.
-#define Z_MIN_PIN          124
+
+#if MODEL == 0
+	#define Z_MIN_PIN          124
+#else
+	#define Z_MIN_PIN          128
+#endif
+
 #define Z_MAX_PIN          -1  //Max endstops default to disabled "-1", set to commented value to enable.
 
-#define E0_STEP_PIN        123
-#define E0_DIR_PIN         122
-#define E0_ENABLE_PIN      121
+#if MODEL == 0
+	#define E0_STEP_PIN        123
+	#define E0_DIR_PIN         122
+	#define E0_ENABLE_PIN      121
+#else
+	#define E0_STEP_PIN        122
+	#define E0_DIR_PIN         121
+	#define E0_ENABLE_PIN      123
+#endif
 
 #define E1_STEP_PIN        53
 #define E1_DIR_PIN         3
@@ -64,8 +76,14 @@
   #define FILRUNOUT_PIN        -1
 #endif
 
-#define HEATER_BED_PIN     17    // BED
-#define HEATER_0_PIN       20
+#if MODEL == 0
+	#define HEATER_BED_PIN     17    // BED
+	#define HEATER_0_PIN       20
+#else
+	#define HEATER_BED_PIN     67    // BED
+	#define HEATER_0_PIN       20
+#endif
+
 #define HEATER_1_PIN       -1//16  // 12
 #define HEATER_2_PIN       -1  // 11
 #define HEATER_3_PIN       -1
