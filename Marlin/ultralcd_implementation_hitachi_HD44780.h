@@ -395,6 +395,9 @@ static void lcd_implementation_init(
     #ifdef LCD_PIN_BL // Enable LCD backlight
 		pinMode(LCD_PIN_BL, OUTPUT);
 		digitalWrite(LCD_PIN_BL, HIGH);
+                pinMode(17, OUTPUT);
+		digitalWrite(17, HIGH);
+              
   #endif
 #endif
 
@@ -469,6 +472,8 @@ static void lcd_implementation_status_screen() {
   #if LCD_WIDTH < 20
 
     lcd.setCursor(0, 0);
+    lcd.print(LCD_STR_THERMOMETER[0]);
+    lcd.setCursor(1, 0);
     lcd.print(itostr3(tHotend));
     lcd.print('/');
     lcd.print(itostr3left(tTarget));
