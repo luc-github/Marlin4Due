@@ -397,13 +397,14 @@ static void lcd_implementation_init(
 		digitalWrite(LCD_PIN_BL, HIGH);
                 pinMode(17, OUTPUT);
 		digitalWrite(17, HIGH);
+                
               
   #endif
 #endif
 
     lcd_set_custom_characters(
         #ifdef LCD_PROGRESS_BAR
-            progress_bar_set
+            progress_bar_setchrome://flags/#enable-npapi
         #endif
     );
 
