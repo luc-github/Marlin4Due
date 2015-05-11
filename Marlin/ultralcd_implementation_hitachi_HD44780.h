@@ -528,7 +528,7 @@ static void lcd_implementation_status_screen() {
     // Lines 2 for 4 line LCD
     #if LCD_WIDTH < 20
       #ifdef SDSUPPORT
-        lcd.setCursor(0, 2);
+        lcd.setCursor(0, 1);
         lcd_printPGM(PSTR("SD"));
         if (IS_SD_PRINTING)
           lcd.print(itostr3(card.percentDone()));

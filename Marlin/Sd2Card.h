@@ -125,7 +125,7 @@ uint8_t const SD_CARD_TYPE_SDHC = 3;
 //------------------------------------------------------------------------------
 // SPI pin definitions - do not edit here - change in SdFatConfig.h
 //
-#ifndef SOFTWARE_SPI
+#ifndef SPI_SLOW_BITBANG
 // hardware pin defs
 /** The default chip select pin for the SD card is SS. */
 uint8_t const  SD_CHIP_SELECT_PIN = SS_PIN;
@@ -137,17 +137,17 @@ uint8_t const  SPI_MISO_PIN = MISO_PIN;
 /** SPI Clock pin */
 uint8_t const  SPI_SCK_PIN = SCK_PIN;
 
-#else  // SOFTWARE_SPI
+#else  // SPI_SLOW_BITBANG
 
 /** SPI chip select pin */
-uint8_t const SD_CHIP_SELECT_PIN = SOFT_SPI_CS_PIN;
+uint8_t const SD_CHIP_SELECT_PIN = SS_PIN;
 /** SPI Master Out Slave In pin */
-uint8_t const SPI_MOSI_PIN = SOFT_SPI_MOSI_PIN;
+uint8_t const SPI_MOSI_PIN = SPE_MOSI_PIN;
 /** SPI Master In Slave Out pin */
-uint8_t const SPI_MISO_PIN = SOFT_SPI_MISO_PIN;
+uint8_t const SPI_MISO_PIN = SPE_MISO_PIN;
 /** SPI Clock pin */
-uint8_t const SPI_SCK_PIN = SOFT_SPI_SCK_PIN;
-#endif  // SOFTWARE_SPI
+uint8_t const SPI_SCK_PIN = SPE_SCK_PIN;
+#endif  // SPI_SLOW_BITBANG
 //------------------------------------------------------------------------------
 /**
  * \class Sd2Card

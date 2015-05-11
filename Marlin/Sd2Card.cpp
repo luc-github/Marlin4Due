@@ -28,24 +28,47 @@
 //------------------------------------------------------------------------------
 
 #if defined (ARDUINO_ARCH_SAM)
+#ifdef SPI_SLOW_BITBANG
+	static volatile RwReg *mosiport, *clkport, *misoport;
+	static uint32_t mosipinmask, clkpinmask, misopinmask;
+	/** nop to tune soft SPI timing */
+	#define nop asm volatile ("nop\n\t")
+#endif
 
 #include <SPI.h>
-
-static void spiInit(void) {
-	SPI.end();
-	//todo: check these settings
-	SPI.begin();
-	SPI.setDataMode (SPI_MODE0);
-	SPI.setBitOrder(MSBFIRST);
-}
 
 static void spiSetSckRate (uint8_t spiRate) {
 	SPI.setClockDivider(spiRate);
 }
 
-static uint8_t spiRec() {
-    return SPI.transfer(0xFF);
-}
+
+  static  uint8_t spiRec(void) {
+#ifndef SPI_SLOW_BITBANG
+	return SPI.transfer(0xFF);
+#else
+    uint8_t data = 0;
+    // no interrupts during byte receive - about 8 us
+    noInterrupts();
+    // output pin high - like sending 0XFF
+    *mosiport |= mosipinmask;
+    
+    for (uint8_t i = 0; i < 8; i++) {
+      *clkport |=  clkpinmask;
+      data <<= 1;
+      
+      if ((*misoport) & misopinmask)  data |= 1;
+      
+      *clkport &=  ~clkpinmask;
+      
+      // adjust so SCK is nice
+      nop;
+      nop;
+    }
+    // enable interrupts
+    interrupts();
+    return data;
+#endif
+  }
 
 static inline __attribute__((always_inline))
 void spiRead(uint8_t* buf, uint16_t nbyte) {
@@ -55,9 +78,25 @@ void spiRead(uint8_t* buf, uint16_t nbyte) {
 
 }
 
-static void spiSend(uint8_t b) {
-    SPI.transfer(b);
-}
+ static void spiSend(uint8_t b) {
+#ifndef SPI_SLOW_BITBANG
+	 SPI.transfer(b);
+#else
+      for (uint8_t i = 0; i < 8; i++) {
+        *clkport &= ~clkpinmask;
+        if (b & 0x80)
+          *mosiport |= mosipinmask;
+        else
+          *mosiport &= ~mosipinmask;
+        *clkport |=  clkpinmask;
+        b <<= 1;
+      }
+      nop;nop;nop;nop;
+      *clkport &= ~clkpinmask;
+      
+      interrupts();
+#endif
+  }
 
 static inline __attribute__((always_inline))
   void spiSendBlock(uint8_t token, const uint8_t* buf) {
@@ -134,7 +173,7 @@ void Sd2Card::chipSelectHigh() {
 }
 //------------------------------------------------------------------------------
 void Sd2Card::chipSelectLow() {
-  setSckRate(spiRate_);
+  //setSckRate(spiRate_);
   digitalWrite(chipSelectPin_, LOW);
 }
 //------------------------------------------------------------------------------
@@ -216,23 +255,31 @@ bool Sd2Card::init(uint8_t sckRateID, uint8_t chipSelectPin) {
   // set pin modes
   pinMode(chipSelectPin_, OUTPUT);
   chipSelectHigh();
-  pinMode(SPI_MISO_PIN, INPUT);
-  pinMode(SPI_MOSI_PIN, OUTPUT);
-  pinMode(SPI_SCK_PIN, OUTPUT);
-
-  // SS must be in output mode even it is not chip select
-  pinMode(SS_PIN, OUTPUT);
-  // set SS high - may be chip select for another SPI device
-#if SET_SPI_SS_HIGH
-  digitalWrite(SS_PIN, HIGH);
-#endif  // SET_SPI_SS_HIGH
-  spiInit();
-  // set SCK rate for initialization commands
-  setSckRate(SPI_SD_INIT_RATE);
-
+  #ifdef SPI_SLOW_BITBANG
+		pinMode(SPI_MISO_PIN, INPUT);
+		pinMode(SPI_MOSI_PIN, OUTPUT);
+		pinMode(SPI_SCK_PIN, OUTPUT);
+  
+    // use slow bitbang mode
+    clkport     = portOutputRegister(digitalPinToPort(SPI_SCK_PIN));
+    clkpinmask  = digitalPinToBitMask(SPI_SCK_PIN);
+    mosiport    = portOutputRegister(digitalPinToPort(SPI_MOSI_PIN));
+    mosipinmask = digitalPinToBitMask(SPI_MOSI_PIN);
+    misoport    = portInputRegister(digitalPinToPort(SPI_MISO_PIN));
+    misopinmask = digitalPinToBitMask(SPI_MISO_PIN);
+    #else
+		 SPI.end();
+		 SPI.begin();
+		#ifdef SPI_CLOCK_DIV128
+			SPI.setClockDivider(SPI_CLOCK_DIV128);
+		#else
+			SPI.setClockDivider(255);
+		#endif
+	#endif
   // must supply min of 74 clock cycles with CS high.
   for (uint8_t i = 0; i < 10; i++) spiSend(0XFF);
 
+  chipSelectLow();
   // command to go idle in SPI mode
   while ((status_ = cardCommand(CMD0, 0)) != R1_IDLE_STATE) {
     if (((uint16_t)millis() - t0) > SD_INIT_TIMEOUT) {
@@ -274,7 +321,11 @@ bool Sd2Card::init(uint8_t sckRateID, uint8_t chipSelectPin) {
   }
   chipSelectHigh();
 
+#ifdef SPI_SLOW_BITBANG
   return setSckRate(sckRateID);
+#else
+  return true;
+#endif
 
  fail:
   chipSelectHigh();

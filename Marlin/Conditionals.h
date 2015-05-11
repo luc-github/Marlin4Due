@@ -164,7 +164,7 @@
   #ifdef DAVINCI_PANEL
     #define LCD_WIDTH 16
     #define LCD_HEIGHT 4
-    //#define SDSUPPORT
+    #define SDSUPPORT
     #define ULTRA_LCD
     #define ULTIPANEL
     #define NEWPANEL

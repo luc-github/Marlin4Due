@@ -102,11 +102,12 @@
 //back			
 #define BTN_BACK 75
 
-#define SS            55
-#define MOSI      43
-#define MISO       73
-#define SCK         42
+#define SPI_SLOW_BITBANG
+#define SS        		  55
+#define SPE_MOSI_PIN      43
+#define SPE_MISO_PIN      73
+#define SPE_SCK_PIN       42
 
-#define SDCARDDETECT 		-1 //currently disabled until SDSUPPORT implemented
+#define SDCARDDETECT 	  74 //currently disabled until SDSUPPORT implemented
 
 #define MYSERIAL SerialUSB
