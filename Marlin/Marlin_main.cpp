@@ -4102,6 +4102,23 @@ inline void gcode_M226() {
 
 #endif // NUM_SERVOS > 0
 
+
+ /**
+   * M281: Test WATCHDOG by resetting printer using a Dead loop
+   */
+  inline void gcode_M281() {
+#ifdef USE_WATCHDOG
+	SERIAL_PROTOCOLLNPGM("Triggering watchdog. If activated, the printer will reset.");
+	disable_all_heaters(); //switch off heater
+	disable_all_steppers();//switch off stepper
+	_delay_ms(200); //for safety
+	while(1) {} // Endless loop;
+#else
+	SERIAL_PROTOCOLLNPGM("Watchdog feature was not compiled into this version!");
+#endif
+  }
+
+
 #if BEEPER > 0 || defined(ULTRALCD) || defined(LCD_USE_I2C_BUZZER)
 
   /**
@@ -5262,6 +5279,10 @@ void process_commands() {
           gcode_M280();
           break;
       #endif // NUM_SERVOS > 0
+      
+		case 281: // M281 test watchdog is working by resetting printer going to dead loop 
+		  gcode_M281();
+		  break;
 
       #if BEEPER > 0 || defined(ULTRALCD) || defined(LCD_USE_I2C_BUZZER)
         case 300: // M300 - Play beep tone
